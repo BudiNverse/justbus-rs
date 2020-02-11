@@ -4,10 +4,14 @@ use crate::hashmap::Cache;
 use actix_web::{web, App, HttpResponse, HttpServer, ResponseError};
 use lta::{
     prelude::*,
-    r#async::{bus::get_arrival, lta_client::LTAClient},
+    experimental::{
+        lta_client::AsyncLTAClient,
+        bus::Bus,
+        utils::*
+    }
 };
-use std::{fmt::Formatter, time::Duration};
 use std::env::var;
+use std::{fmt::Formatter, time::Duration};
 
 mod hashmap;
 
@@ -35,14 +39,14 @@ impl ResponseError for JustBusError {
 async fn get_timings(
     bus_stop: web::Path<u32>,
     lru: web::Data<Cache<u32, String>>,
-    client: web::Data<LTAClient>,
+    client: web::Data<AsyncLTAClient>,
 ) -> Result<HttpResponse, JustBusError> {
     let bus_stop = bus_stop.into_inner();
     let in_lru = lru.get(bus_stop);
     let res = match in_lru {
         Some(f) => HttpResponse::Ok().content_type("application/json").body(f),
         None => {
-            let arrivals = get_arrival(&client, bus_stop, None)
+            let arrivals = Bus::get_arrival(&client, bus_stop, None)
                 .await
                 .map_err(JustBusError::ClientError)?
                 .services;
@@ -67,9 +71,10 @@ async fn dummy() -> &'static str {
 async fn main() -> std::io::Result<()> {
     let server_ip_and_port = var("IP_ADDR").unwrap_or("127.0.0.1:8080".to_string());
     println!("Starting server @ {}", &server_ip_and_port);
+
     let api_key = var("API_KEY").expect("API_KEY NOT FOUND!");
     let ttl = Duration::from_secs(15);
-    let client = LTAClient::with_api_key(api_key);
+    let client = AsyncLTAClient::new(api_key);
     HttpServer::new(move || {
         App::new()
             .route("/api/v1/dummy", web::get().to(dummy))

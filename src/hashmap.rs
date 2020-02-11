@@ -26,7 +26,6 @@ mod test {
         thread::sleep(Duration::from_millis(10));
         assert_eq!(hm.get(32), Some("hello_32_replaced"));
         println!("{:?}", hm.get(32));
-
     }
 }
 
