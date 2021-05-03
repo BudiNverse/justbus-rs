@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{ResponseError};
 use lta::LTAError;
 use std::fmt;
 
@@ -19,8 +19,4 @@ impl fmt::Display for JustBusError {
     }
 }
 
-impl ResponseError for JustBusError {
-    fn error_response(&self) -> HttpResponse {
-        HttpResponse::InternalServerError().finish()
-    }
-}
+impl ResponseError for JustBusError {}

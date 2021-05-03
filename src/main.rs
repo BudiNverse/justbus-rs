@@ -79,12 +79,12 @@ async fn main() -> io::Result<()> {
         // app.data -> non thread local
         // app.app_data -> shared across
         #[cfg(any(feature = "cht", feature = "dashmap"))]
-        let app = app.data(Cache::<u32, String>::with_ttl_and_size(TTL, SZ));
+        let app = app.app_data(web::Data::new(Cache::<u32, String>::with_ttl_and_size(TTL, SZ)));
 
         #[cfg(feature = "swisstable")]
-        let app = app.data(RwLock::new(SwissCache::<u32, String>::with_ttl_and_size(
+        let app = app.app_data(web::Data::new(RwLock::new(SwissCache::<u32, String>::with_ttl_and_size(
             TTL, SZ,
-        )));
+        ))));
 
         #[cfg(feature = "logging")]
         let app = app
